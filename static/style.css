@@ -18,13 +18,18 @@
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
 
 body {
-  background-color: var(--bg);
+  background-color: #030303;
   color: var(--text);
-  overflow-x: hidden;
-  background: 
-    radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.12) 0%, transparent 40%),
-    radial-gradient(circle at 100% 100%, rgba(168, 85, 247, 0.08) 0%, transparent 40%),
-    linear-gradient(135deg, #030303 0%, #0a0a0f 100%);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  /* 🏁 Structural Data Grid Layer */
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(168, 85, 247, 0.05) 0%, transparent 40%);
+  background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%;
   background-attachment: fixed;
 }
 
@@ -211,6 +216,42 @@ select:focus, textarea:focus {
 @keyframes marquee {
     from { transform: translateX(0); }
     to { transform: translateX(-50%); }
+}
+
+/* ✨ Shimmer & Glint Effects */
+.status-indicator, .sync-data-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.status-indicator::after, .sync-data-btn::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -100%;
+  width: 50%; height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  transform: skewX(-20deg);
+  animation: shimmer 4s infinite linear;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  25%, 100% { left: 200%; }
+}
+
+.sync-data-btn:hover::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(99, 102, 241, 0.2),
+    transparent
+  );
+  animation: shimmer 1s infinite linear;
 }
 
 ::selection { background: var(--accent); color: white; }

@@ -13,15 +13,20 @@
 <body class="bg-[#030303] text-white overflow-x-hidden">
     <canvas id="bg-canvas" class="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none opacity-20"></canvas>
 
-    <header class="navbar px-8 py-6 flex justify-between items-center border-b border-white/[0.05] bg-black/40 backdrop-blur-xl">
+    <header class="navbar px-8 py-4 flex justify-between items-center border-b border-white/[0.05] bg-black/40 backdrop-blur-xl sticky top-0 z-50">
         <div class="logo-text">OPENENV <span class="pro-badge">PRO</span></div>
-        <div class="flex items-center gap-4">
-            <button class="btn btn-primary !py-2 !px-4 !text-[10px]" id="btn-auto-loop" onclick="toggleAutoBenchmark()">
+        <div class="flex items-center gap-6">
+            <button class="btn btn-primary !py-1.5 !px-4 !text-[10px]" id="btn-auto-loop" onclick="toggleAutoBenchmark()">
                 <i data-lucide="play" class="w-3 h-3"></i> Start Auto-Pilot
             </button>
-            <div class="flex items-center gap-6 text-[10px] uppercase font-bold tracking-[0.2em] text-zinc-500">
-                <span id="env-status-text">INITIALIZING...</span>
-                <button onclick="window.open('/static/support_tickets_1000.json')" class="hover:text-white transition-colors">SYNC_DATA</button>
+            <div class="flex items-center gap-6 text-[10px] uppercase font-bold tracking-[0.2em]">
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span id="env-status-text" class="text-zinc-500">READY.OPS</span>
+                </div>
+                <button onclick="window.open('/static/support_tickets_1000.json')" class="sync-data-btn">
+                   <i data-lucide="database" class="w-3 h-3"></i> SYNC_REGISTRY
+                </button>
             </div>
         </div>
     </header>
