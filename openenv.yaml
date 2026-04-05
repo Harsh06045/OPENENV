@@ -1,0 +1,14 @@
+name: support-triage-env
+version: 1.0.0
+description: Customer Support Ticket Triage Environment (Multi-Level Classification, Routing, and Resolution)
+entrypoint: app.main:app
+tasks:
+  - name: easy_classification
+    description: Classification of single-intent support tickets.
+  - name: medium_routing
+    description: Critical routing and prioritization of urgent technical issues.
+  - name: hard_resolution
+    description: Complex multi-intent resolution involving refund, technical, and account issues.
+observation_model: Observation
+action_model: Action
+reward_model: Reward
