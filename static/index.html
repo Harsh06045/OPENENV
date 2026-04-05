@@ -3,137 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenEnv | Triage Zen</title>
-    <!-- Inter & JetBrains Mono Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
-    <!-- Chart.js -->
+    <title>OpenEnv | Chorus Triage Suite</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Layout Utilities -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-[#09090b] text-[#fafafa]">
+<body class="bg-[#030303] text-white overflow-x-hidden">
+    <canvas id="bg-canvas" class="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none opacity-20"></canvas>
 
-    <header class="navbar px-12 py-10 flex justify-between items-center border-b border-white/[0.05]">
-        <div class="logo-text">OPENENV <span class="bg-indigo-600 text-[10px] px-2 py-0.5 rounded ml-2">PRO</span></div>
-        <div class="flex items-center gap-6">
-            <button class="btn btn-primary !py-2 !px-6 !text-[10px]" id="btn-auto-loop" onclick="toggleAutoBenchmark()">
-                <i data-lucide="play" class="w-4 h-4"></i> Start Auto-Benchmark
+    <header class="navbar px-8 py-6 flex justify-between items-center border-b border-white/[0.05] bg-black/40 backdrop-blur-xl">
+        <div class="logo-text">OPENENV <span class="pro-badge">PRO</span></div>
+        <div class="flex items-center gap-4">
+            <button class="btn btn-primary !py-2 !px-4 !text-[10px]" id="btn-auto-loop" onclick="toggleAutoBenchmark()">
+                <i data-lucide="play" class="w-3 h-3"></i> Start Auto-Pilot
             </button>
-            <div class="flex items-center gap-8 text-[10px] uppercase font-bold tracking-[0.2em] text-[#71717a]">
-                <div class="flex items-center gap-2">
-                    <div class="status-dot"></div>
-                    <span id="env-status-text">READY.OPS</span>
-                </div>
-                <button onclick="window.open('/static/support_tickets_1000.json')" class="hover:text-white transition-colors">
-                    SYNC_1K
-                </button>
+            <div class="flex items-center gap-6 text-[10px] uppercase font-bold tracking-[0.2em] text-zinc-500">
+                <span id="env-status-text">INITIALIZING...</span>
+                <button onclick="window.open('/static/support_tickets_1000.json')" class="hover:text-white transition-colors">SYNC_DATA</button>
             </div>
         </div>
     </header>
 
-    <main class="dashboard fade-in">
-        
-        <!-- Left Column: Scenario & Metrics -->
-        <section class="flex flex-col gap-12">
+    <main class="dashboard p-6 grid lg:grid-cols-2 gap-8 max-w-[1600px] mx-auto">
+        <!-- Scenario View -->
+        <section class="flex flex-col gap-8">
             <div class="panel">
-                <div class="label flex justify-between">
-                    <span>Incoming Scenario</span>
-                    <span class="text-indigo-500 lowercase font-mono">Sandbox://Enabled</span>
+                <div class="label flex justify-between items-center">
+                    <span>Incoming Scenario Buffer</span>
+                    <span class="text-indigo-500 lowercase font-mono">Sandbox://Live</span>
                 </div>
                 <h2 id="ticket-id-badge" class="ticket-title">--</h2>
+                <textarea id="ticket-buffer" class="bg-white/[0.02] border border-white/5 p-4 rounded-lg w-full mb-6 focus:border-indigo-500 outline-none text-zinc-400 text-sm leading-relaxed font-mono" rows="6"></textarea>
                 
-                <!-- Editable Scenario Sandbox -->
-                <textarea id="ticket-buffer" class="ticket-body bg-white/[0.02] border border-white/5 p-4 rounded-lg w-full mb-8 focus:border-indigo-500 outline-none transition-all" rows="4"></textarea>
-                
-                <div id="prev-resp-container" class="hidden mb-12">
-                    <div class="label">Previous Action</div>
-                    <p id="ticket-prev-resp" class="text-xs italic text-[#71717a] border-l border-indigo-600 pl-4 py-2"></p>
-                </div>
-                                <div class="label">Benchmark Tier</div>
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <select id="task-select" class="w-full">
-                        <option value="easy_classification">Easy Range</option>
-                        <option value="medium_routing">Medium Range</option>
-                        <option value="hard_resolution">Hard Range</option>
-                        <option value="extreme_edge_cases">Extreme (SOS)</option>
-                    </select>
-                    <button class="btn btn-outline justify-center" id="btn-reset" onclick="resetEnv()">
-                        <i data-lucide="refresh-cw" class="w-3 h-3"></i> Sync State
-                    </button>
-                </div>
-                
-                <div class="label mt-8">Agent Personality Protocol</div>
-                <div class="grid grid-cols-3 gap-2 mb-8">
-                    <button class="text-[9px] border border-white/5 py-2 rounded hover:bg-indigo-500/10 transition-all font-bold">EMPATHETIC</button>
-                    <button class="text-[9px] border border-white/5 py-2 rounded bg-indigo-500/20 border-indigo-500/30 font-bold">EFFICIENT</button>
-                    <button class="text-[9px] border border-white/5 py-2 rounded hover:bg-indigo-500/10 transition-all font-bold">TECHNICAL</button>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <div class="label">Benchmark Difficulty</div>
+                        <select id="task-select" class="w-full">
+                            <option value="easy_classification">Easy: Rapid Triage</option>
+                            <option value="medium_routing">Medium: Priority Conflict</option>
+                            <option value="hard_resolution">Hard: Policy Enforcement</option>
+                            <option value="extreme_edge_cases">Extreme: Hostile/Critical</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div class="label">Environment Pulse</div>
+                        <button class="btn btn-outline w-full justify-center" onclick="resetEnv()">
+                            <i data-lucide="refresh-ccw" class="w-4 h-4"></i> Pulse Reset
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <div class="panel">
-                <div class="label">Live Performance Heatmap</div>
-                <div id="heatmap-container" class="flex gap-1 mb-8">
-                     <!-- 10 cells populate via JS -->
-                     <div class="w-full h-8 bg-white/5 rounded-sm"></div>
-                     <div class="w-full h-8 bg-white/5 rounded-sm"></div>
-                     <div class="w-full h-8 bg-white/5 rounded-sm"></div>
-                     <div class="w-full h-8 bg-white/5 rounded-sm"></div>
-                     <div class="w-full h-8 bg-white/5 rounded-sm"></div>
-                     <div class="w-full h-8 bg-white/5 rounded-sm"></div>
-                     <div class="w-full h-8 bg-white/5 rounded-sm"></div>
-                     <div class="w-full h-8 bg-white/5 rounded-sm"></div>
-                     <div class="w-full h-8 bg-white/5 rounded-sm"></div>
-                     <div class="w-full h-8 bg-white/5 rounded-sm"></div>
-                </div>
+                <div class="label">Performance Telemetry (Live)</div>
+                <div class="metrics-row mb-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
-                        <div class="label">Step Reward</div>
-                        <div class="metric-val text-indigo-500" id="metric-reward">0.00</div>
-                        <p id="metric-feedback" class="text-[10px] uppercase font-bold text-zinc-600 mt-1">Standby</p>
+                        <div class="label">Reward</div>
+                        <div class="metric-val text-indigo-500" id="metric-reward">--</div>
+                        <p id="metric-feedback" class="text-[8px] text-zinc-700 mt-1 uppercase font-bold">Standby</p>
                     </div>
                     <div>
-                        <div class="label">Total Avg</div>
-                        <div class="metric-val" id="metric-total">0.00</div>
-                        <p id="metric-steps" class="text-[10px] uppercase font-bold text-zinc-600 mt-1">Iter://0:5</p>
+                        <div class="label">Session Avg</div>
+                        <div class="metric-val" id="metric-total">--</div>
+                        <p id="metric-steps" class="text-[8px] text-zinc-700 mt-1 uppercase font-bold">Iter: 0/5</p>
                     </div>
                     <div>
                         <div class="label">Latency</div>
-                        <div class="metric-val text-zinc-400" id="metric-latency">0ms</div>
-                        <p class="text-[9px] text-zinc-700 uppercase font-bold mt-1">Net Time</p>
+                        <div class="metric-val text-zinc-600" id="metric-latency">0ms</div>
                     </div>
                     <div>
-                        <div class="label">Est Cost</div>
-                        <div class="metric-val text-zinc-400" id="metric-cost">$0.00</div>
-                        <p class="text-[9px] text-zinc-700 uppercase font-bold mt-1">USD Estimate</p>
+                        <div class="label">Cost Est.</div>
+                        <div class="metric-val text-zinc-600" id="metric-cost">$0.00</div>
                     </div>
                 </div>
-                <div class="chart-container h-48">
+                <div class="h-44">
                     <canvas id="scoreChart"></canvas>
+                </div>
+                <!-- Heatmap Ribbon -->
+                <div id="heatmap-container" class="flex gap-1 mt-6">
+                     <div class="flex-1 h-1.5 bg-white/5 rounded-full"></div>
+                     <div class="flex-1 h-1.5 bg-white/5 rounded-full"></div>
+                     <div class="flex-1 h-1.5 bg-white/5 rounded-full"></div>
+                     <div class="flex-1 h-1.5 bg-white/5 rounded-full"></div>
+                     <div class="flex-1 h-1.5 bg-white/5 rounded-full"></div>
+                     <div class="flex-1 h-1.5 bg-white/5 rounded-full"></div>
+                     <div class="flex-1 h-1.5 bg-white/5 rounded-full"></div>
+                     <div class="flex-1 h-1.5 bg-white/5 rounded-full"></div>
+                     <div class="flex-1 h-1.5 bg-white/5 rounded-full"></div>
+                     <div class="flex-1 h-1.5 bg-white/5 rounded-full"></div>
                 </div>
             </div>
         </section>
 
-        <!-- Right Column: Intelligence & Leaderboard -->
-        <section class="flex flex-col gap-12">
+        <!-- Command Panel -->
+        <section class="flex flex-col gap-8">
             <div class="panel">
-                <div class="label">Agent Execution</div>
-                <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="label">Agent Intelligence Controls</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                     <div>
-                        <div class="label">Routing Department</div>
+                        <div class="label">Primary Queue</div>
                         <select id="action-category">
-                            <option value="billing">Billing Ops</option>
-                            <option value="payments">Payment Processing</option>
-                            <option value="technical">Technical Support</option>
-                            <option value="account">Account & Security</option>
-                            <option value="success">Customer Success</option>
-                            <option value="legal">Legal & Privacy</option>
-                            <option value="general">Standard</option>
+                            <option value="billing">Billing Operations</option>
+                            <option value="payments">Merchant Payments</option>
+                            <option value="technical">Systems Support</option>
+                            <option value="account">Security/Auth Service</option>
+                            <option value="legal">Legal/Corporate</option>
+                            <option value="general">Default Queue</option>
                         </select>
                     </div>
                     <div>
-                        <div class="label">Severity Tier</div>
+                        <div class="label">Priority Rank</div>
                         <select id="action-priority">
                             <option value="low">P3 (Routine)</option>
                             <option value="medium">P2 (Standard)</option>
@@ -142,52 +123,43 @@
                         </select>
                     </div>
                 </div>
-                <div class="mb-4">
-                    <div class="label">Proposed Response</div>
-                    <textarea id="action-response" placeholder="Draft agent response..." rows="8" class="resize-none"></textarea>
+                <div class="mb-6">
+                    <div class="label">Resolution Draft</div>
+                    <textarea id="action-response" placeholder="Agent proposal log..." rows="5" class="resize-none font-sans text-sm"></textarea>
                 </div>
-                
-                <!-- Advanced Thought Console -->
-                <div class="label">Reasoning Console (CoT)</div>
-                <div class="bg-black/40 border border-white/5 rounded p-4 mb-4 h-32 overflow-y-auto text-[10px] font-mono text-zinc-500 leading-relaxed" id="thought-console">
-                    > Agent Protocol initialised...
-                    > Awaiting stimulus...
-                </div>
-
-                <div class="flex items-center gap-4 mb-6 p-4 bg-white/[0.01] border border-white/[0.03] rounded-lg">
-                    <input type="checkbox" id="check-manual-review" checked class="w-4 h-4 accent-indigo-600">
-                    <label for="check-manual-review" class="text-[10px] text-zinc-500 uppercase font-bold">Protocol Review Override</label>
+                <div class="label">Deep Reasoning Stream (CoT)</div>
+                <div id="thought-console" class="bg-black/80 border border-white/5 p-4 rounded-lg h-32 overflow-y-auto font-mono text-[9px] text-zinc-600 mb-8 leading-relaxed scroll-smooth">
+                    > Initialize Session Controller...
                 </div>
                 <div class="flex gap-4">
-                    <button class="btn btn-outline flex-1 justify-center" id="btn-auto" onclick="autoSolve()">
-                        <i data-lucide="cpu" class="w-4 h-4"></i> Run agent
+                    <button class="btn btn-outline flex-1 justify-center !text-[9px]" id="btn-auto" onclick="autoSolve()">
+                        <i data-lucide="cpu" class="w-3 h-3"></i> Run Intelligence
                     </button>
-                    <button class="btn btn-primary flex-1 justify-center" id="btn-submit" onclick="submitAction()">
-                        <i data-lucide="send" class="w-4 h-4"></i> Submit
+                    <button class="btn btn-primary flex-1 justify-center !text-[9px]" id="btn-submit" onclick="submitAction()">
+                        <i data-lucide="send" class="w-3 h-3"></i> Execute Submission
                     </button>
                 </div>
             </div>
 
             <div class="panel">
-                <div class="label">Session Results</div>
-                <div id="session-log" class="min-h-[100px] mb-8">
-                     <p class="text-[9px] text-zinc-600 italic">Historical data standby...</p>
+                <div class="label">Evaluation Session Registry</div>
+                <div id="session-log" class="min-h-[140px] mb-8 max-h-[140px] overflow-y-auto pr-2 scroll-smooth">
+                     <p class="text-[9px] text-zinc-800 italic uppercase">Registry Awaiting Cycle...</p>
                 </div>
-                <button class="btn btn-outline w-full justify-center" onclick="downloadEvaluation()">
-                    <i data-lucide="download" class="w-4 h-4"></i> Export Evaluation Result
+                <button class="btn btn-outline w-full justify-center !text-[9px]" onclick="downloadEvaluation()">
+                    <i data-lucide="file-json" class="w-3 h-3"></i> Download BenchResult (.JSON)
                 </button>
             </div>
         </section>
     </main>
 
-    <footer class="py-12 border-t border-white/[0.05] overflow-hidden">
-        <div class="label px-12 mb-4">Live Scenario Feed (1,000 TKT Registry)</div>
-        <div id="scenario-ticker" class="flex animate-marquee whitespace-nowrap gap-12 text-[9px] font-mono text-zinc-600 uppercase tracking-widest">
-            <!-- Populated via script.js -->
-            <span>[TKT-4921] LOADING_DATASET...</span>
+    <footer class="py-12 border-t border-white/[0.05] overflow-hidden bg-black/20">
+        <div id="scenario-ticker" class="flex animate-marquee whitespace-nowrap gap-12 text-[8px] font-mono text-zinc-800 uppercase tracking-widest font-bold">
+            <span>[TKT-REGISTRY-SYNCING-256-BIT-ENCRYPTION]</span>
         </div>
     </footer>
 
     <script src="script.js"></script>
+    <script>setTimeout(() => lucide.createIcons(), 100);</script>
 </body>
 </html>

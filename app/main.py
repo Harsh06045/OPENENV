@@ -1,18 +1,16 @@
-from fastapi import FastAPI, HTTPException, Body
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-from .env import SupportEnv
-from .models import Action, Observation
-import httpx
+# OpenEnv | Standardized Backend Proxy & Environment V1
 import os
 import json
+from fastapi import FastAPI, Body, Query
+from fastapi.staticfiles import StaticFiles
+from .env import SupportEnv
 
 app = FastAPI()
 env = SupportEnv()
 
 @app.on_event("startup")
 async def startup_event():
-    """Generates the 1000 ticket benchmark dataset for the UI download."""
+    """Generates the 1,000-ticket benchmark dataset for the UI download."""
     from .tasks import TicketGenerator
     import json
     gen = TicketGenerator()
@@ -20,12 +18,11 @@ async def startup_event():
     os.makedirs("static", exist_ok=True)
     with open("static/support_tickets_1000.json", "w") as f:
         json.dump(tickets, f, indent=2)
-    print("SUCCESS: 1000-ticket benchmark dataset generated.")
+    print("SUCCESS: 1,000-ticket benchmark dataset generated.")
 
 @app.get("/leaderboard")
 async def get_leaderboard():
     """Returns the current model rankings (Global Benchmarks)."""
-    # This data can be expanded as more agents are evaluated
     return [
         {"name": "Qwen 2.5-72B", "score": 0.94, "type": "CoT Strategy"},
         {"name": "GPT-4o (baseline)", "score": 0.88, "type": "Zero-Shot"},
@@ -35,73 +32,57 @@ async def get_leaderboard():
 
 @app.post("/auto-solve")
 async def auto_solve(payload: dict = Body(...)):
-    """Acts as a proxy for the LLM agent to suggest an action."""
-    from openai import OpenAI
+    """Acts as a proxy for the LLM agent. Falls back to baseline logic if no API key is present."""
+    ticket_text = payload.get("ticket_text", "No problem reported.")
+    api_key = os.getenv("OPENAI_API_KEY") or os.getenv("HF_TOKEN")
     
-    ticket_text = payload.get("ticket_text", "")
-    API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
-    HF_TOKEN = os.getenv("HF_TOKEN", os.getenv("OPENAI_API_KEY", ""))
-    MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
-
-    if not HF_TOKEN:
+    if not api_key:
+        print("MOCK_LOGIC: Triggered for diagnostic testing.")
+        cat = "technical"
+        pri = "medium"
+        if "crash" in ticket_text.lower():
+            cat = "technical"
+            pri = "high"
+        elif "login" in ticket_text.lower() or "password" in ticket_text.lower():
+            cat = "account"
+            pri = "high"
+        
         return {
-            "category": "billing", 
-            "priority": "high", 
-            "response": "Hello, we are looking into your issue. Please provide your order ID."
+            "category": cat,
+            "priority": pri,
+            "response": f"[DIAGNOSTIC_AGENT] I have analyzed your report relating to '{cat.upper()}'. Since you are experiencing a {pri.upper()} impact on your windows session, I have escalated this to our Desktop Systems team for immediate investigation."
         }
 
-    client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
-    
-    prompt = f"""
-    You are a smart support agent. Based on this ticket, return a JSON classification:
-    Ticket: "{ticket_text}"
-    
-    Format JSON:
-    {{
-      "category": "billing | technical | refund | general",
-      "priority": "low | medium | high",
-      "response": "Compose a short helpful response"
-    }}
-    """
     try:
-        res = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0
+        from openai import OpenAI
+        client = OpenAI(base_url=os.getenv("API_BASE_URL", "https://api.openai.com/v1"), api_key=api_key)
+        model = os.getenv("MODEL_NAME", "gpt-4o")
+        
+        response = client.chat.completions.create(
+            model=model,
+            messages=[{
+                "role": "user",
+                "content": f"Classify this ticket and draft a reply. JSON ONLY: {{'category', 'priority', 'response'}}. TICKET: {ticket_text}"
+            }],
+            response_format={"type": "json_object"}
         )
-        content = res.choices[0].message.content.strip()
-        if "```json" in content: content = content.split("```json")[1].split("```")[0].strip()
-        elif "```" in content: content = content.split("```")[1].split("```")[0].strip()
-        return json.loads(content)
+        return json.loads(response.choices[0].message.content)
     except Exception as e:
-        return {"category": "general", "priority": "medium", "response": f"Auto-solve failed: {str(e)}"}
+        print(f"LLM ERROR: {e}")
+        return {"category": "general", "priority": "medium", "response": "Error processing request."}
 
 @app.post("/reset")
 async def reset(task: str = "easy_classification"):
-    try:
-        obs = env.reset(task)
-        return {"observation": obs.dict(), "done": False}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    obs = env.reset(task=task)
+    return {"observation": obs}
 
 @app.post("/step")
-async def step(action: Action = Body(...)):
-    try:
-        result = env.step(action)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+async def step(action: dict = Body(...)):
+    obs, reward, done, info = env.step(action)
+    return {"observation": obs, "reward": reward, "done": done, "info": info}
 
 @app.get("/state")
-async def state():
-    try:
-        return env.state_fn()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+async def get_state():
+    return {"observation": env.observation}
 
-# Static Files (Frontend UI)
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
-@app.get("/")
-async def get_index():
-    return FileResponse("static/index.html")
